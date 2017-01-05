@@ -1,0 +1,163 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+<br />
+<br />
+<br />
+<h2>Products with MongoDB</h2>
+<br />
+<form class="form-horizontal">
+    <input type="hidden" name="ProductId" />
+    <div class="form-group">
+        <input name="Name" type="text" class="form-control" placeholder="Enter with name here..." />
+    </div>
+    <div class="form-group">
+        <input name="Category" type="text" class="form-control" placeholder="Enter with category here..." />
+    </div>
+    <div class="form-group">
+        <input name="Price" type="text" class="form-control" placeholder="0.00" />
+    </div>
+    <div class="form-group">
+        <input type="button" class="btn btn-primary" value="Save" id="btnSave" />
+        <input type="button" class="btn btn-default" value="Clear" id="btnClear" />
+    </div>
+
+</form>
+
+<br />
+<div class="panel panel-default">
+    <table id="tabela" class="table table-bordered table-condensed table-hover table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Price</th>
+                <th>Category</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+@section scripts{
+    <script>
+        var baseUrl = "http://localhost:51108/api/products/";
+        var productViewModel = {
+            "ProductId": "",
+            "Name": "",
+            "Category": "",
+            "Price": 0
+        };
+
+        function clear() {
+
+            $("[name='ProductId']").val("");
+            $("[name='Name']").val("");
+            $("[name='Category']").val("");
+            $("[name='Price']").val("");
+
+            productViewModel.ProductId = "";
+            productViewModel.Name = "";
+            productViewModel.Category = "";
+            productViewModel.Price = "";
+        }
+
+        function save() {
+            productViewModel.ProductId = $("[name='ProductId']").val();
+            productViewModel.Name = $("[name='Name']").val();
+            productViewModel.Category = $("[name='Category']").val();
+            productViewModel.Price = $("[name='Price']").val();
+
+            var type = productViewModel.ProductId == "" ? "POST" : "PUT";
+
+            $.ajax({
+                type: type,
+                url: baseUrl,
+                dataType: "json",
+                contentType: 'application/json;charset=utf-8',
+                data: JSON.stringify(productViewModel),
+                success: function (data) {
+                    clear();
+                    getAll();
+                },
+                error: function (error) {
+                    alert("Deu pau!!!");
+                }
+            });
+        }
+
+        function update(id) {
+            if (id == "") {
+                alert("Erro");
+                return;
+            }
+
+            $.ajax({
+                type: "GET",
+                url: baseUrl + id,
+                contentType: 'application/json;charset=utf-8',
+                success: function (data) {
+                    $("[name='ProductId']").val(data.productId);
+                    $("[name='Name']").val(data.name);
+                    $("[name='Price']").val(data.price);
+                    $("[name='Category']").val(data.category);
+                },
+                error: function () {
+                    alert("Deu ruim mermão!!!");
+                }
+            });
+
+
+        }
+
+        function getAll() {
+            $.ajax({
+                type: "GET",
+                url: baseUrl,
+                contentType: 'application/json;charset=utf-8',
+                success: function (data) {
+                    var body = $("#tabela > tbody");
+                    body.empty();
+                    var bodyTabela = "";
+                    $.each(data, function (i, item) {
+                        bodyTabela += "<tr>";
+                        bodyTabela += "<td>" + item.name + "</td>";
+                        bodyTabela += "<td>" + item.category + "</td>";
+                        bodyTabela += "<td>" + item.price + "</td>";
+                        bodyTabela += "<td>"
+                        bodyTabela += "<input type=\"button\" onclick=\"remove('" + item.productId + "');\" class=\"btn btn-danger\" value=\"Remove\" />";
+                        bodyTabela += "<input type=\"button\" onclick=\"update('" + item.productId + "');\" class=\"btn btn-warning\" value=\"Update\" />"
+                        bodyTabela += "</tr>";
+                    });
+                    body.append(bodyTabela);
+                },
+                error: function () {
+                    alert("Deu ruim mermão!!!");
+                }
+            });
+
+        }
+
+        function remove(id) {
+            $.ajax({
+                type: "DELETE",
+                url: baseUrl + id,
+                success: function (data) {
+                    getAll();
+                },
+                error: function (error) {
+                    alert(error);
+                }
+            });
+        }
+
+        $("#btnSave").click(save);
+        $("#btnClear").click(clear);
+
+        getAll();
+
+
+
+
+    </script>
+}
